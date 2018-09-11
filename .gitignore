@@ -1,0 +1,9 @@
+# dependencies
+/node_modules
+
+#tmp
+/chromium-data
+
+#log
+error.log
+logs.log
