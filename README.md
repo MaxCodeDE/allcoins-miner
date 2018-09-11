@@ -1,0 +1,1 @@
+# allcoins-miner
