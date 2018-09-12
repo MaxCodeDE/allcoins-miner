@@ -19,9 +19,14 @@ const config = require('../config.js');
 
     await setMinigPowerTo(page, 90);
 
-    await helper.sleep(10000);    
-    
+    await helper.sleep(10000);
+
     printHashes(page);
+
+    await helper.sleep(config.miningTimeHours * 60 * 60 * 1000);
+    //await helper.sleep(5 * 1000);
+    await browser.close(browser);
+    process.exit(100);
 })();
 
 
@@ -50,32 +55,33 @@ async function closeRegisterDialog(page) {
 
 async function setMinigPowerTo(page, power) {
     console.log(`Power wird auf ${power}% gesetzt.`);
-    await page.evaluate(() => {
-        //document.getElementById('#power').value = power;
-        document.cookie ="pminer="+power+"; expires=Sat, 05 01 2119 09:50:25 UTC; path=/";
-        /*setTimeout(() => {
-            power();
-        }, 2000);*/
-    });
+    await page.evaluate((power) => {
+        // Cookie wird von allcoins.pw gesetzt und dan die Seite neu geladen
+        document.cookie = "pminer=" + power + "; expires=Sat, 05 01 2119 09:50:25 UTC; path=/";
+    }, power);
     await page.reload();
     console.log(`Power wurde auf ${power}% gesetzt.`);
 }
 
 
 async function printHashes(page) {
-    var stats = await page.evaluate(() => {
-        var hashPower = document.getElementById('ths').innerHTML;
-        var currentHashes = document.getElementById('th').innerHTML;
-        var hashesToPay = document.getElementById('thp').innerHTML;
-        return {
-            hashPower: hashPower,
-            currentHashes: currentHashes,
-            hashesToPay: hashesToPay
-        };
-    });
-    console.log('Hash Power: ' + stats.hashPower);
-    console.log('Aktuelle Hashes: ' + stats.currentHashes);
-    console.log('Auszuzahlende Hashes: ' + stats.hashesToPay);
-    await helper.sleep(10000);
-    printHashes(page);
+    if (page.isClosed()) {
+        console.log('Seite wurde geschlossen. Keine Statistiken vorhanden.');
+    } else {
+        var stats = await page.evaluate(() => {
+            var hashPower = document.getElementById('ths').innerHTML;
+            var currentHashes = document.getElementById('th').innerHTML;
+            var hashesToPay = document.getElementById('thp').innerHTML;
+            return {
+                hashPower: hashPower,
+                currentHashes: currentHashes,
+                hashesToPay: hashesToPay
+            };
+        });
+        console.log('Hash Power: ' + stats.hashPower);
+        console.log('Aktuelle Hashes: ' + stats.currentHashes);
+        console.log('Auszuzahlende Hashes: ' + stats.hashesToPay);
+        await helper.sleep(10000);
+        printHashes(page);
+    }
 }

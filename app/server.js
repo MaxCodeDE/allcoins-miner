@@ -4,35 +4,29 @@ const config = require('../config');
 
 console.log('App startet...');
 
-timeChecker();
+var rule = new schedule.RecurrenceRule();
+rule.hour = config.miningStartingDayHour;
+rule.minute = config.miningStartingDayMinute;
 
-function timeChecker() {
-    var now = new Date();
-    var nowHours = now.getHours();
-    var miningTime = config.miningTimeHours * 60000;
-    console.log(`Gemint wird für ${config.miningTimeHours} Stunden(${miningTime}ms) ab ${config.miningStartingDayHour} Uhr.`);
+console.log(`Miner startet um ${rule.hour}:${rule.minute}`);
 
-    if (nowHours >= config.miningStartingDayHour) {
+var minerJob = schedule.scheduleJob(rule, function () {
 
-        var miningProzess = new(forever.Monitor)('app/miner.js');
+    var miningProzess = new(forever.Monitor)('app/miner.js');
 
-        miningProzess.on('restart', () => {
-            console.error(`'Miner startet zum ${miningProzess.times} mal neu.`);
-        });
+    miningProzess.on('restart', () => {
+        console.error(`'Miner startet zum ${miningProzess.times} mal neu.`);
+    });
 
-        miningProzess.on('exit:code', function (code) {
-            console.error('Miner gestoppt mit Code: ' + code);
-        });
+    miningProzess.on('exit:code', function (code) {
+        console.error('Miner gestoppt mit Code: ' + code);
+        if (code === 100) {
+            console.log(`Prozess erfolgreich gestoppt (Code: ${code})`);
+            miningProzess.stop();
+        }
+    });
 
-        // Miningprozess starten
-        console.log('Miner wird versucht zu starten...');
-        miningProzess.start();
-
-        // Miningprozess Stoppen und timeChecker loop ausführen
-        setTimeout(() => miningProzess.stop(), miningTime); //stopt miner.js
-        setTimeout(() => timeChecker(), miningTime + 30000); //miningTime + 10 Sekunden
-    } else {
-        console.log('Miner läuft erst später.');
-        setTimeout(() => timeChecker(), 60000); //1 Stunde
-    }
-}
+    // Miningprozess starten
+    console.log('Miner wird versucht zu starten...');
+    miningProzess.start();
+});
