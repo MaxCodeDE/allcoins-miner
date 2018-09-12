@@ -1,4 +1,4 @@
-# mb-server-monero-miner
+# allcoins-miner
 A miner for my server, that starts mining at night when server is unused. 
 The miner loads the allcoins.pw site and starts javascript mining.
 Uid and available coins can be found at https://allcoins.pw/miner.php
